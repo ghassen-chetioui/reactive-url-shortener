@@ -25,7 +25,7 @@ class UrlShortener(connectionFactory: ReactiveRedisConnectionFactory) {
     private val redis = ReactiveRedisTemplate(connectionFactory, RedisSerializationContext.string()).opsForValue()
 
     @PostMapping
-    fun save(req: ServerHttpRequest) = req.path.toString().substring(1).let { url ->
+    fun save(req: ServerHttpRequest) = req.uri.toASCIIString().substringAfter("${req.uri.authority}/").let { url ->
         if (UrlValidator(arrayOf("http", "https")).isValid(url)) {
             murmur3_32().hashString(url, UTF_8).toString().let { id -> redis.set(id, url).map { ResponseEntity.ok("localhost:8080/$id") } }
         } else Mono.just(ResponseEntity.badRequest().build())
